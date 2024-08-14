@@ -7,7 +7,6 @@ DOMAIN = "frodbus_tcp"
 PYFRODBUS_COORDINATOR = "coordinator"
 PYFRODBUS_OBJECT = "pyfrodbus"
 PYFRODBUS_REMOVE_LISTENER = "remove_listener"
-PYFRODBUS_SENSORS = "pyfrodbus_sensors"
 PYFRODBUS_DEVICE_INFO = "device_info"
 
 PLATFORMS = [Platform.SENSOR]

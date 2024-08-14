@@ -25,7 +25,6 @@ from .const import (
     PYFRODBUS_DEVICE_INFO,
     PYFRODBUS_OBJECT,
     PYFRODBUS_REMOVE_LISTENER,
-    # PYFRODBUS_SENSORS,
 )
 from .pyfrodbus import FroniusModbusTcp
 
@@ -89,7 +88,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[DOMAIN][entry.entry_id] = {
         PYFRODBUS_OBJECT: fronius_modbus_tcp,
         PYFRODBUS_COORDINATOR: coordinator,
-        # PYFRODBUS_SENSORS: sensor_def,
         PYFRODBUS_REMOVE_LISTENER: remove_stop_listener,
         PYFRODBUS_DEVICE_INFO: device_info,
     }
@@ -104,6 +102,5 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         data = hass.data[DOMAIN].pop(entry.entry_id)
-        await data[PYFRODBUS_OBJECT].close_session()
         data[PYFRODBUS_REMOVE_LISTENER]()
     return unload_ok
