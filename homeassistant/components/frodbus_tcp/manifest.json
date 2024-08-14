@@ -1,0 +1,13 @@
+{
+  "domain": "frodbus_tcp",
+  "name": "Fronius Modbus TCP",
+  "codeowners": ["@maxarm"],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://www.home-assistant.io/integrations/frodbus_tcp",
+  "homekit": {},
+  "iot_class": "local_polling",
+  "requirements": [],
+  "ssdp": [],
+  "zeroconf": []
+}

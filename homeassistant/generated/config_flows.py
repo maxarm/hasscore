@@ -198,6 +198,7 @@ FLOWS = {
         "fritz",
         "fritzbox",
         "fritzbox_callmonitor",
+        "frodbus_tcp",
         "fronius",
         "frontier_silicon",
         "fully_kiosk",

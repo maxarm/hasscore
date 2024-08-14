@@ -2037,6 +2037,12 @@
         }
       }
     },
+    "frodbus_tcp": {
+      "name": "Fronius Modbus TCP",
+      "integration_type": "hub",
+      "config_flow": true,
+      "iot_class": "local_polling"
+    },
     "fronius": {
       "name": "Fronius",
       "integration_type": "hub",

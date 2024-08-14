@@ -493,6 +493,8 @@ build.json @home-assistant/supervisor
 /tests/components/fritzbox/ @mib1185 @flabbamann
 /homeassistant/components/fritzbox_callmonitor/ @cdce8p
 /tests/components/fritzbox_callmonitor/ @cdce8p
+/homeassistant/components/frodbus_tcp/ @maxarm
+/tests/components/frodbus_tcp/ @maxarm
 /homeassistant/components/fronius/ @farmio
 /tests/components/fronius/ @farmio
 /homeassistant/components/frontend/ @home-assistant/frontend
