@@ -41,10 +41,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     fronius_device = await fronius_modbus_tcp.device_info()
 
-    unique_id = "noney" if entry.unique_id is None else entry.unique_id
+    if entry.unique_id is None:
+        raise Exception("unique id is None!")  # noqa: TRY002
 
     device_info = DeviceInfo(
-        identifiers={(DOMAIN, unique_id)},
+        identifiers={(DOMAIN, str(entry.unique_id))},
         manufacturer="Fronius",
         serial_number=fronius_device["serial"],
     )
