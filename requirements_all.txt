@@ -1688,6 +1688,9 @@ pyEmby==1.9
 # homeassistant.components.hikvision
 pyHik==0.3.2
 
+# homeassistant.components.frodbus_tcp
+pyModbusTCP==0.2.2
+
 # homeassistant.components.rfxtrx
 pyRFXtrx==0.31.1
 

@@ -7,7 +7,7 @@
   "documentation": "https://www.home-assistant.io/integrations/frodbus_tcp",
   "homekit": {},
   "iot_class": "local_polling",
-  "requirements": [],
+  "requirements": ["pyModbusTCP==0.2.2"],
   "ssdp": [],
   "zeroconf": []
 }

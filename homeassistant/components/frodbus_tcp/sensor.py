@@ -21,7 +21,13 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
 )
 
-from .const import DOMAIN, PYFRODBUS_COORDINATOR, PYFRODBUS_DEVICE_INFO
+from . import pyfrodbus
+from .const import (
+    DOMAIN,
+    PYFRODBUS_COORDINATOR,
+    PYFRODBUS_DEVICE_INFO,
+    PYFRODBUS_SENSORS,
+)
 
 SENSOR_ENTITIES: dict[str, SensorEntityDescription] = {
     "storage_control_mode": SensorEntityDescription(
@@ -62,6 +68,7 @@ async def async_setup_entry(
 
     coordinator = fro_data[PYFRODBUS_COORDINATOR]
     device_info = fro_data[PYFRODBUS_DEVICE_INFO]
+    available_sensors = fro_data[PYFRODBUS_SENSORS]
 
     if TYPE_CHECKING:
         assert config_entry.unique_id
@@ -70,10 +77,11 @@ async def async_setup_entry(
         FroniusModbusTcpSensor(
             coordinator,
             config_entry.unique_id,
-            sensor_entity_desc,
+            SENSOR_ENTITIES.get(sensor.name),
+            sensor,
             device_info,
         )
-        for sensor_key, sensor_entity_desc in SENSOR_ENTITIES.items()
+        for sensor in available_sensors
     )
 
 
@@ -84,13 +92,16 @@ class FroniusModbusTcpSensor(CoordinatorEntity, SensorEntity):
         self,
         coordinator: DataUpdateCoordinator,
         config_entry_unique_id: str,
-        sensor_entity_description: SensorEntityDescription,
+        sensor_entity_description: SensorEntityDescription | None,
+        sensor: pyfrodbus.Sensor,
         device_info: DeviceInfo,
     ) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
+        if sensor_entity_description is None:
+            raise Exception  # noqa: TRY002
         self.entity_description = sensor_entity_description
-        self._sensor = sensor_entity_description
+        self._sensor = sensor
         self._attr_device_info = device_info
         self._attr_unique_id = (
             f"{config_entry_unique_id}-{sensor_entity_description.key}"
@@ -110,10 +121,7 @@ class FroniusModbusTcpSensor(CoordinatorEntity, SensorEntity):
     @property
     def native_value(self) -> StateType:
         """Return the state of the sensor."""
-        # T O D O : _sensor.value does not exist => need to get value somewhere else => e.g. introduce a new object type like pysma.Sensor?
-        #  which then has a value?
-        # return self._sensor.value
-        return None
+        return self._sensor.state
 
     async def async_added_to_hass(self) -> None:
         """Run when entity about to be added to hass."""

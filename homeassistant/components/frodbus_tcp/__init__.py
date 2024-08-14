@@ -25,6 +25,7 @@ from .const import (
     PYFRODBUS_DEVICE_INFO,
     PYFRODBUS_OBJECT,
     PYFRODBUS_REMOVE_LISTENER,
+    PYFRODBUS_SENSORS,
 )
 from .pyfrodbus import FroniusModbusTcp
 
@@ -40,6 +41,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     fronius_device = await fronius_modbus_tcp.device_info()
 
+    sensors = fronius_modbus_tcp.get_sensors()
+
     if entry.unique_id is None:
         raise Exception("unique id is None!")  # noqa: TRY002
 
@@ -53,7 +56,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def async_update_data():
         """Update the used Fronius Modbus TCP sensors."""
         try:
-            await fronius_modbus_tcp.read()
+            await fronius_modbus_tcp.read(sensors)
         except Exception as exc:
             raise UpdateFailed(exc) from exc
 
@@ -90,6 +93,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         PYFRODBUS_COORDINATOR: coordinator,
         PYFRODBUS_REMOVE_LISTENER: remove_stop_listener,
         PYFRODBUS_DEVICE_INFO: device_info,
+        PYFRODBUS_SENSORS: sensors,
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
