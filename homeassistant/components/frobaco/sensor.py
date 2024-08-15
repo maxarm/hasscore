@@ -1,4 +1,4 @@
-"""Fronius Modbus TCP Sensors."""
+"""Fronius Battery Control Sensors."""
 
 from __future__ import annotations
 
@@ -86,7 +86,7 @@ async def async_setup_entry(
 
 
 class FroniusModbusTcpSensor(CoordinatorEntity, SensorEntity):
-    """Representation of a Fronius Modbus Tcp sensor."""
+    """Representation of a Fronius Battery Control sensor."""
 
     def __init__(
         self,
@@ -114,7 +114,7 @@ class FroniusModbusTcpSensor(CoordinatorEntity, SensorEntity):
         if self._attr_device_info is None:
             raise Exception  # noqa: TRY002
 
-        name_prefix = f"frodbustcp-{self._attr_device_info.get("serial_number")}"
+        name_prefix = f"frobaco-{self._attr_device_info.get("serial_number")}"
 
         return f"{name_prefix} {super().name}"
 

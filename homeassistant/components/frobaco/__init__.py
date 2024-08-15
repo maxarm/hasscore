@@ -1,4 +1,4 @@
-"""The Fronius Modbus TCP integration."""
+"""The Fronius Battery Control integration."""
 
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Fronius Modbus TCP from a config entry."""
+    """Set up Fronius Battery Control from a config entry."""
     host = entry.data[CONF_HOST]
     port = entry.data[CONF_PORT]
 
@@ -54,7 +54,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Define the coordinator
     async def async_update_data():
-        """Update the used Fronius Modbus TCP sensors."""
+        """Update the used Fronius Battery Control sensors."""
         try:
             await fronius_modbus_tcp.read(sensors)
         except Exception as exc:
@@ -67,7 +67,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = DataUpdateCoordinator(
         hass,
         _LOGGER,
-        name="frodbus_tcp",
+        name="frobaco",
         update_method=async_update_data,
         update_interval=interval,
     )
@@ -75,13 +75,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     try:
         await coordinator.async_config_entry_first_refresh()
     except ConfigEntryNotReady:  # noqa: TRY302
-        # await .close_session()
         raise
 
     # Ensure we logout on shutdown
     async def async_close_session(event):
         """Close the session."""
-        # await .close_session()
 
     remove_stop_listener = hass.bus.async_listen_once(
         EVENT_HOMEASSISTANT_STOP, async_close_session

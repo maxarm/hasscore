@@ -1368,9 +1368,6 @@ pyDuotecno==2024.5.1
 # homeassistant.components.electrasmart
 pyElectra==1.2.4
 
-# homeassistant.components.frodbus_tcp
-pyModbusTCP==0.2.2
-
 # homeassistant.components.rfxtrx
 pyRFXtrx==0.31.1
 

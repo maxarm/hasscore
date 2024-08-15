@@ -1,1 +1,1 @@
-"""Tests for the Fronius Modbus TCP integration."""
+"""Tests for the Fronius Battery Control integration."""

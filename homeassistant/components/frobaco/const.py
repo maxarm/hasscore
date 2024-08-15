@@ -1,8 +1,8 @@
-"""Constants for the Fronius Modbus TCP integration."""
+"""Constants for the Fronius Battery Control integration."""
 
 from homeassistant.const import Platform
 
-DOMAIN = "frodbus_tcp"
+DOMAIN = "frobaco"
 
 PYFRODBUS_COORDINATOR = "coordinator"
 PYFRODBUS_OBJECT = "pyfrodbus"

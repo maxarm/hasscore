@@ -1,10 +1,10 @@
 {
-  "domain": "frodbus_tcp",
-  "name": "Fronius Modbus TCP",
+  "domain": "frobaco",
+  "name": "Fronius Battery Control",
   "codeowners": ["@maxarm"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://www.home-assistant.io/integrations/frodbus_tcp",
+  "documentation": "https://www.home-assistant.io/integrations/frobaco",
   "homekit": {},
   "iot_class": "local_polling",
   "requirements": ["pyModbusTCP==0.2.2"],

@@ -13,7 +13,7 @@
           "host": "The hostname or IP address of your Fronius inverter."
         },
         "description": "Enter your Fronius inverter device information.",
-        "title": "Set up Fronius Modbus TCP"
+        "title": "Set up Fronius Battery Control"
       }
     },
     "abort": {

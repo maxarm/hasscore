@@ -2037,8 +2037,8 @@
         }
       }
     },
-    "frodbus_tcp": {
-      "name": "Fronius Modbus TCP",
+    "frobaco": {
+      "name": "Fronius Battery Control",
       "integration_type": "hub",
       "config_flow": true,
       "iot_class": "local_polling"

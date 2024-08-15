@@ -1,4 +1,4 @@
-"""Config flow for Fronius Modbus TCP."""
+"""Config flow for Fronius Battery Control."""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 
 
 class FroniusModbusTcpConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Fronius Modbus TCP."""
+    """Handle a config flow for Fronius Battery Control."""
 
     VERSION = 1
 
