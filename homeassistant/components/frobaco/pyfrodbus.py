@@ -182,3 +182,34 @@ class FroniusModbusTcp:
         if datatype == "uint16":
             return self.read_uint16(register)
         return False
+
+    def write_float(self, addr, value):  # noqa: D102
+        floats_list = [value]
+        b32_l = [utils.encode_ieee(f) for f in floats_list]
+        b16_l = utils.long_list_to_word(b32_l, big_endian=False)
+        return self._modbus.write_multiple_registers(addr - 1, b16_l)
+
+    def write_uint16(self, addr, value):  # noqa: D102
+        return self._modbus.write_single_register(addr - 1, value)
+
+    def write_data(self, parameter, value):  # noqa: D102
+        sectionMatch = None
+        for section, properties in registers.items():
+            for key in properties:
+                if key == parameter:
+                    sectionMatch = section
+        [register, datatype, unit_id] = registers[sectionMatch][parameter]
+
+        if parameter in (
+            "battery_max_discharge_percent",
+            "battery_max_charge_percent",
+        ):
+            value *= 100
+            value = utils.get_2comp(int(value))
+
+        self._modbus.unit_id = unit_id
+        if datatype == "float":
+            return self.write_float(register, value)
+        if datatype == "uint16":
+            return self.write_uint16(register, value)
+        return False
