@@ -38,21 +38,14 @@ async def test_async_change_charge_power_leads_to_correct_charge_percent_write(
     ):
         await init_integration(hass, mock_config_entry)
 
-        number_entity_name = "number.frobaco_9137319fro_battery_max_charge_power"
-        number_entity = hass.states.get(number_entity_name)
-        assert number_entity
-
-        test_value = 1000.0
         await hass.services.async_call(
             NUMBER_DOMAIN,
             SERVICE_SET_VALUE,
             {
-                ATTR_ENTITY_ID: number_entity_name,
-                ATTR_VALUE: test_value,
+                ATTR_ENTITY_ID: "number.frobaco_9137319fro_battery_max_charge_power",
+                ATTR_VALUE: 1000.0,
             },
             blocking=True,
         )
-
-        await hass.async_block_till_done()
 
         client_mock.write_uint16.assert_called_once_with(40357, 500)
