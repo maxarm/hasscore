@@ -23,6 +23,12 @@ class MockFroniusModbusClient(FroniusModbusClient):
     def read_uint16(self, addr):  # noqa: D102
         if addr == 40357:  # battery_max_charge_percent
             return 10000
+        if addr == 40356:  # discharge
+            return 10000
+        if addr == 40346:  # charge_rate
+            return 20000
+        if addr == 40349:  # control_mode
+            return 0
         return 0
 
     def write_uint16(self, addr, value):  # noqa: D102
