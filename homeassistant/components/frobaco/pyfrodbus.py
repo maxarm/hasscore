@@ -73,6 +73,53 @@ registers = {
 }
 
 
+class FroniusModbusClient:
+    """Mockable FroniusModbusClient type."""
+
+    def __init__(self, host: str, port: int) -> None:
+        """Initialize the FroniusModbusClient type."""
+        self._modbus = ModbusClient(
+            host=host, port=port, auto_open=True, auto_close=True, debug=False
+        )
+        self._modbus.unit_id = (
+            1  # change logic if PowerMeter (200) would be addressed as well
+        )
+
+    def read_uint16(self, addr):  # noqa: D102
+        regs = self._modbus.read_holding_registers(addr - 1, 1)
+        if regs:
+            return int(regs[0])
+        return False
+
+    def read_uint32(self, addr):  # noqa: D102
+        regs = self._modbus.read_holding_registers(addr - 1, 2)
+        if regs:
+            return int(utils.word_list_to_long(regs, big_endian=True)[0])
+        return False
+
+    def read_float(self, addr):  # noqa: D102
+        regs = self._modbus.read_holding_registers(addr - 1, 2)
+        if not regs:
+            return False
+
+        list_32_bits = utils.word_list_to_long(regs, big_endian=True)
+        return float(utils.decode_ieee(list_32_bits[0]))
+
+    def write_float(self, addr, value):  # noqa: D102
+        floats_list = [value]
+        b32_l = [utils.encode_ieee(f) for f in floats_list]
+        b16_l = utils.long_list_to_word(b32_l, big_endian=False)
+        return self._modbus.write_multiple_registers(addr - 1, b16_l)
+
+    def write_uint16(self, addr, value):  # noqa: D102
+        return self._modbus.write_single_register(addr - 1, value)
+
+
+def get_modbus_client(host: str, port: int) -> FroniusModbusClient:
+    """Mockable creation function."""
+    return FroniusModbusClient(host, port)
+
+
 class Sensor:
     """pyfrodbus sensor."""
 
@@ -98,11 +145,9 @@ class Sensor:
 class FroniusModbusTcp:
     """FroniusModbusTCP type."""
 
-    def __init__(self, host, port, auto=True) -> None:
+    def __init__(self, host: str, port: int, auto=True) -> None:
         """Initialize the FroniusModbusTCP type."""
-        self._modbus = ModbusClient(
-            host=host, port=port, auto_open=True, auto_close=True, debug=False
-        )
+        self._modbusClient = get_modbus_client(host, port)
 
     async def device_info(self) -> dict:
         """Simulate device info and return the results."""
@@ -142,26 +187,6 @@ class FroniusModbusTcp:
 
         return True
 
-    def read_uint16(self, addr):  # noqa: D102
-        regs = self._modbus.read_holding_registers(addr - 1, 1)
-        if regs:
-            return int(regs[0])
-        return False
-
-    def read_uint32(self, addr):  # noqa: D102
-        regs = self._modbus.read_holding_registers(addr - 1, 2)
-        if regs:
-            return int(utils.word_list_to_long(regs, big_endian=True)[0])
-        return False
-
-    def read_float(self, addr):  # noqa: D102
-        regs = self._modbus.read_holding_registers(addr - 1, 2)
-        if not regs:
-            return False
-
-        list_32_bits = utils.word_list_to_long(regs, big_endian=True)
-        return float(utils.decode_ieee(list_32_bits[0]))
-
     def read_data(self, parameter: str):  # noqa: D102
         sectionMatch = None
         for section, properties in registers.items():
@@ -174,23 +199,13 @@ class FroniusModbusTcp:
 
         [register, datatype, unit_id] = registers[sectionMatch][parameter]
 
-        self._modbus.unit_id = unit_id
         if datatype == "float":
-            return self.read_float(register)
+            return self._modbusClient.read_float(register)
         if datatype == "uint32":
-            return self.read_uint32(register)
+            return self._modbusClient.read_uint32(register)
         if datatype == "uint16":
-            return self.read_uint16(register)
+            return self._modbusClient.read_uint16(register)
         return False
-
-    def write_float(self, addr, value):  # noqa: D102
-        floats_list = [value]
-        b32_l = [utils.encode_ieee(f) for f in floats_list]
-        b16_l = utils.long_list_to_word(b32_l, big_endian=False)
-        return self._modbus.write_multiple_registers(addr - 1, b16_l)
-
-    def write_uint16(self, addr, value):  # noqa: D102
-        return self._modbus.write_single_register(addr - 1, value)
 
     def write_data(self, parameter, value):  # noqa: D102
         sectionMatch = None
@@ -207,9 +222,8 @@ class FroniusModbusTcp:
             value *= 100
             value = utils.get_2comp(int(value))
 
-        self._modbus.unit_id = unit_id
         if datatype == "float":
-            return self.write_float(register, value)
+            return self._modbusClient.write_float(register, value)
         if datatype == "uint16":
-            return self.write_uint16(register, value)
+            return self._modbusClient.write_uint16(register, value)
         return False
