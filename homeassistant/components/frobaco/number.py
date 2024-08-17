@@ -9,7 +9,7 @@ from homeassistant.components.number import (
     NumberEntity,
     NumberEntityDescription,
 )
-from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfPower
+from homeassistant.const import EntityCategory, UnitOfPower
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -25,28 +25,6 @@ _LOGGER = logging.getLogger(__name__)
 
 
 NUMBERS: tuple[NumberEntityDescription, ...] = (
-    NumberEntityDescription(
-        key="battery_max_discharge_percent",
-        name="Battery Max Discharge Percent",
-        native_unit_of_measurement=PERCENTAGE,
-        device_class=NumberDeviceClass.BATTERY,
-        entity_category=EntityCategory.CONFIG,
-        entity_registry_enabled_default=True,
-        native_max_value=100,
-        native_min_value=-100,
-        native_step=1,
-    ),
-    NumberEntityDescription(
-        key="battery_max_charge_percent",
-        name="Battery Max Charge Percent",
-        native_unit_of_measurement=PERCENTAGE,
-        device_class=NumberDeviceClass.BATTERY,
-        entity_category=EntityCategory.CONFIG,
-        entity_registry_enabled_default=True,
-        native_max_value=100,
-        native_min_value=-100,
-        native_step=1,
-    ),
     NumberEntityDescription(
         key="battery_max_discharge_power",
         name="Battery Max Discharge Power",
@@ -96,11 +74,38 @@ async def async_setup_entry(
     if TYPE_CHECKING:
         assert config_entry.unique_id
 
+    for desc in NUMBERS:
+        if desc.key == "battery_max_charge_power":
+            battery_max_charge_power_number = BatteryMaxChargePowerNumber(
+                hass,
+                config_entry.unique_id,
+                desc,
+                pyfrodbus,
+                device_info,
+            )
+        if desc.key == "battery_max_discharge_power":
+            battery_max_discharge_power_number = BatteryMaxDischargePowerNumber(
+                hass,
+                config_entry.unique_id,
+                desc,
+                pyfrodbus,
+                device_info,
+            )
+        if desc.key == "storage_control_mode":
+            storage_control_mode = StorageControlModeNumber(
+                hass,
+                config_entry.unique_id,
+                desc,
+                pyfrodbus,
+                device_info,
+            )
+
     async_add_entities(
-        FroniusModbusTcpNumber(
-            hass, config_entry.unique_id, description, pyfrodbus, device_info
-        )
-        for description in NUMBERS
+        [
+            battery_max_charge_power_number,
+            battery_max_discharge_power_number,
+            storage_control_mode,
+        ]
     )
 
 
@@ -128,29 +133,23 @@ class FroniusModbusTcpNumber(NumberEntity):
 
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
-
-        if self.entity_description.key == "battery_max_charge_power":
-            battery_charge_rate_state = self._hass.states.get(
-                "sensor.frobaco_9137319fro_battery_charge_rate"
-            )
-            if battery_charge_rate_state is not None:
-                battery_charge_rate = battery_charge_rate_state.state
-            else:
-                _LOGGER.error(
-                    "No state found for sensor.frobaco_9137319fro_battery_charge_rate"
-                )
-                return
-
-            percent_value = value / float(battery_charge_rate) * 100
-            self._pyfrodbus.write_data(
-                parameter="battery_max_charge_percent", value=int(percent_value)
-            )
-        else:
-            self._pyfrodbus.write_data(
-                parameter=self.entity_description.key, value=int(value)
-            )
-
         self._last_value = value
+
+    def get_battery_charge_rate(self) -> float:
+        """Get the current battery charge rate value."""
+        battery_charge_rate_sensor_name = (
+            f"sensor.{self.get_name("battery_charge_rate")}"
+        )
+
+        battery_charge_rate_state = self._hass.states.get(
+            battery_charge_rate_sensor_name
+        )
+        if battery_charge_rate_state is not None:
+            battery_charge_rate = battery_charge_rate_state.state
+        else:
+            _LOGGER.error("No state found for %s", battery_charge_rate_sensor_name)
+            raise Exception("No state found for battery_charge_rate")  # noqa: TRY002
+        return int(battery_charge_rate)
 
     @property
     def native_value(self) -> float | None:
@@ -162,5 +161,53 @@ class FroniusModbusTcpNumber(NumberEntity):
         """Return the name of the number prefixed with the device name."""
         if self._attr_device_info is None:
             raise Exception  # noqa: TRY002
-        name_prefix = f"frobaco-{self._attr_device_info.get("serial_number")}"
-        return f"{name_prefix} {super().name}"
+        return self.get_name(super().name)
+
+    def get_name(self, number_name):  # noqa: D102
+        name_prefix = f"frobaco_{self._attr_device_info.get("serial_number")}"
+        return f"{name_prefix}_{number_name}"
+
+
+class BatteryMaxChargePowerNumber(FroniusModbusTcpNumber):
+    """Representation of a number that allows adjusting BatteryMaxChargePercent."""
+
+    async def async_set_native_value(self, value: float) -> None:
+        """Update the current value."""
+        await super().async_set_native_value(value)
+
+        try:
+            battery_charge_rate = self.get_battery_charge_rate()
+        except Exception:  # noqa: BLE001
+            return
+
+        percent_value = value / float(battery_charge_rate) * 100
+        self._pyfrodbus.write_data(
+            parameter="battery_max_charge_percent", value=int(percent_value)
+        )
+
+
+class BatteryMaxDischargePowerNumber(FroniusModbusTcpNumber):
+    """Representation of a number that allows adjusting BatteryMaxDischargePercent."""
+
+    async def async_set_native_value(self, value: float) -> None:
+        """Update the current value."""
+        await super().async_set_native_value(value)
+
+        try:
+            battery_charge_rate = self.get_battery_charge_rate()
+        except Exception:  # noqa: BLE001
+            return
+
+        percent_value = value / float(battery_charge_rate) * 100
+        self._pyfrodbus.write_data(
+            parameter="battery_max_discharge_percent", value=int(percent_value)
+        )
+
+
+class StorageControlModeNumber(FroniusModbusTcpNumber):
+    """Representation of a number that allows adjusting StorageControlModeNumber."""
+
+    async def async_set_native_value(self, value: float) -> None:
+        """Update the current value."""
+        await super().async_set_native_value(value)
+        self._pyfrodbus.write_data(parameter="storage_control_mode", value=int(value))
