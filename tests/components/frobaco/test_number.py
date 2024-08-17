@@ -15,7 +15,7 @@ from . import init_integration
 from tests.common import MockConfigEntry
 
 
-async def test_async_setup_entry_basics(
+async def test_async_change_charge_power_leads_to_correct_charge_percent_write(
     hass: HomeAssistant,
     mock_config_entry: MockConfigEntry,
 ) -> None:
