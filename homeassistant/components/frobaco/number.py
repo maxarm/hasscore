@@ -9,11 +9,16 @@ from homeassistant.components.number import (
     NumberEntity,
     NumberEntityDescription,
 )
-from homeassistant.const import PERCENTAGE, EntityCategory
+from homeassistant.const import PERCENTAGE, EntityCategory, UnitOfPower
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, PYFRODBUS_DEVICE_INFO, PYFRODBUS_OBJECT
+from .const import (
+    DOMAIN,
+    MAX_SELECTABLE_CHARGE_POWER,
+    PYFRODBUS_DEVICE_INFO,
+    PYFRODBUS_OBJECT,
+)
 from .pyfrodbus import FroniusModbusTcp
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,6 +45,28 @@ NUMBERS: tuple[NumberEntityDescription, ...] = (
         entity_registry_enabled_default=True,
         native_max_value=100,
         native_min_value=-100,
+        native_step=1,
+    ),
+    NumberEntityDescription(
+        key="battery_max_discharge_power",
+        name="Battery Max Discharge Power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.BATTERY,
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=True,
+        native_max_value=MAX_SELECTABLE_CHARGE_POWER,
+        native_min_value=-MAX_SELECTABLE_CHARGE_POWER,
+        native_step=1,
+    ),
+    NumberEntityDescription(
+        key="battery_max_charge_power",
+        name="Battery Max Charge Power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=NumberDeviceClass.BATTERY,
+        entity_category=EntityCategory.CONFIG,
+        entity_registry_enabled_default=True,
+        native_max_value=MAX_SELECTABLE_CHARGE_POWER,
+        native_min_value=-MAX_SELECTABLE_CHARGE_POWER,
         native_step=1,
     ),
     NumberEntityDescription(
@@ -71,7 +98,7 @@ async def async_setup_entry(
 
     async_add_entities(
         FroniusModbusTcpNumber(
-            config_entry.unique_id, description, pyfrodbus, device_info
+            hass, config_entry.unique_id, description, pyfrodbus, device_info
         )
         for description in NUMBERS
     )
@@ -82,6 +109,7 @@ class FroniusModbusTcpNumber(NumberEntity):
 
     def __init__(
         self,
+        hass: core.HomeAssistant,
         config_entry_unique_id: str,
         description: NumberEntityDescription,
         pyfrodbus: FroniusModbusTcp,
@@ -96,12 +124,32 @@ class FroniusModbusTcpNumber(NumberEntity):
         self._attr_unique_id = f"{config_entry_unique_id}-{description.key}"
         self._pyfrodbus = pyfrodbus
         self._last_value: float | None = 0
+        self._hass = hass
 
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
-        self._pyfrodbus.write_data(
-            parameter=self.entity_description.key, value=int(value)
-        )
+
+        if self.entity_description.key == "battery_max_charge_power":
+            battery_charge_rate_state = self._hass.states.get(
+                "sensor.frobaco_9137319fro_battery_charge_rate"
+            )
+            if battery_charge_rate_state is not None:
+                battery_charge_rate = battery_charge_rate_state.state
+            else:
+                _LOGGER.error(
+                    "No state found for sensor.frobaco_9137319fro_battery_charge_rate"
+                )
+                return
+
+            percent_value = value / float(battery_charge_rate) * 100
+            self._pyfrodbus.write_data(
+                parameter="battery_max_charge_percent", value=int(percent_value)
+            )
+        else:
+            self._pyfrodbus.write_data(
+                parameter=self.entity_description.key, value=int(value)
+            )
+
         self._last_value = value
 
     @property
